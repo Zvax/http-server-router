@@ -225,6 +225,24 @@ class RouterTest extends TestCase
         $this->assertEquals(HttpStatus::OK, $response->getStatus());
     }
 
+    public function testPathIsDecodedExceptForwardSlashes(): void
+    {
+        $requestHandler = new ClosureRequestHandler(function () {
+            return new Response(HttpStatus::OK);
+        });
+
+        $router = new Router($this->server, $this->testLogger, $this->errorHandler);
+        $router->addRoute("GET", "/fo+ö%2F+other", $requestHandler);
+
+        $this->server->start($router, $this->errorHandler);
+
+        $uri = "/fo+" . \rawurlencode("ö/+other");
+
+        $request = new Request($this->createMock(Client::class), "GET", Uri\Http::createFromString($uri));
+        $response = $router->handleRequest($request);
+        $this->assertEquals(HttpStatus::OK, $response->getStatus());
+    }
+
     public function testFallbackInvokedOnNotFoundRoute(): void
     {
         $requestHandler = new ClosureRequestHandler(function () {

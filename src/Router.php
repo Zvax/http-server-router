@@ -74,7 +74,12 @@ final class Router implements RequestHandler
         }
 
         $method = $request->getMethod();
-        $path = \rawurldecode($request->getUri()->getPath());
+
+        $segments = explode('/', $request->getUri()->getPath());
+        $decodedSegments = array_map(\rawurldecode(...), $segments);
+        $fixedSegments = array_map(fn(string $segment): string => str_replace('/', '%2F', $segment), $decodedSegments);
+
+        $path = implode('/', $fixedSegments);
 
         $toMatch = "{$method}\0{$path}";
 
